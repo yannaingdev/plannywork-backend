@@ -1,118 +1,102 @@
 import User from "../model/User.js";
 import { StatusCodes } from "http-status-codes";
-import {
-  BadRequestError,
-  UnAuthenicatedRequest,
-} from "../errors/ErrorIndex.js";
-import responseCookie from "../utils/responseCookie.js";
+import { BadRequestError, UnAuthorizedRequest } from "../errors/ErrorIndex.js";
+import autoCatch from "../utils/autoCatch.js";
+import bcrypt from "bcryptjs";
 
 const register = async (req, res, next) => {
   const { name, email, password } = req.body;
-
   if (!name || !email || !password) {
-    const error = new BadRequestError("Please provide all the field");
-    next(error);
-    return;
+    const error = new BadRequestError("Please provide all the fields");
+    return next(error);
   }
-
   try {
-    const user = await User.create({ name, email, password });
-    const token = user.createJWT();
-    responseCookie(res, token);
-    // token is being removed from res.status response as responseCookie does the job
-    res.status(StatusCodes.CREATED).json({
-      user: {
-        name: user.name,
-        email: user.email,
-        lastName: user.lastName,
-        location: user.location,
-        role: user.role,
-      },
-      // token,
-    });
+    const existingUser = await User.findOne({ email }).lean().exec();
+    if (existingUser) {
+      return res.status(409).json({ message: "duplicate username" });
+    }
+    const hashedPwd = await bcrypt.hash(password, 10);
+    const userObject = { name: name, email: email, password: hashedPwd };
+    const user = await User.create(userObject);
+    if (user) {
+      res.status(200).json({ message: `new user ${name} is created` });
+    } else {
+      throw new Error("user could not be created");
+    }
   } catch (error) {
     next(error);
   }
 };
-
 const login = async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(req.cookies);
-
+  console.log(password);
   if (!email || !password) {
-    const error = new UnAuthenicatedRequest("Plese provide all fields..");
-    next(error);
-    return;
+    const error = new UnAuthorizedRequest("Plese provide all fields..");
+    return next(error);
   }
   try {
     const user = await User.findOne({ email }).select("+password");
+    console.log(user);
     if (!user) {
-      const error = new UnAuthenicatedRequest("Invalid Login Request..");
-      next(error);
+      const error = new UnAuthorizedRequest("Invalid Login Request.");
+      return next(error);
     }
-    // comparePassword function from user model invoked and validate provided password
+    /* comparePassword function of user object returned from User model 
+       is invoked and validate password provided 
+    */
     const isPasswordCorrect = await user.comparePassword(password);
-
-    if (isPasswordCorrect) {
-      const token = user.createJWT();
+    console.log(isPasswordCorrect);
+    if (isPasswordCorrect === true) {
+      // const token = user.createJWT();
       user.password = undefined;
-      responseCookie(res, token);
-      // token is being removed from res.status response as responseCookie does the job
-      res
-        .status(StatusCodes.OK)
-        .json({ user, location: user.location, role: user.role });
-      // if (!user) {
-      //   // throw new UnAuthenicatedRequest("Invalid Credential");
-      //   const error = new UnAuthenicatedRequest("Invalid Credential");
+      req.session.user = {
+        email,
+        isLoggedIn: true,
+        id: user._id,
+      };
+      try {
+        await req.session.save();
+      } catch (error) {
+        next(error);
+      }
+      res.status(200).json({ user, location: user.location, role: user.role });
     } else {
-      const error = new UnAuthenicatedRequest("Invalid Login.");
-      next(error);
-      return;
+      throw new Error("Invalid Login.");
     }
   } catch (error) {
     next(error);
   }
 };
-
 const getCurrentUser = async (req, res, next) => {
   const user = await User.findOne({ _id: req.user.userId });
   res
     .status(StatusCodes.OK)
     .json({ user, role: user.role, location: user.location });
 };
-
 const updateUser = async (req, res, next) => {
   const { email, name, lastName, location } = req.body;
   console.log({ UpdateUserEmail: email });
   if (!email || !name || !lastName || !location) {
     const error = new BadRequestError("Please provide all the fields");
-    next(error);
-    return;
+    return next(error);
   }
   try {
-    // findOneAndUpdate would simly do the job..
+    // findOneAndUpdate would also simly do the job..
     const user = await User.findOne({ _id: req.user.userId });
     console.log(user);
     user.email = email;
     user.name = name;
     user.lastName = lastName;
     user.location = location;
-
+    /* Mongodb Pre Save hooks will run here */
     await user.save();
-    // creating a new token for update user info is optional..
-    // Have removed new token creation and resending token via res.status
-    // const token = user.createJWT();
-    // responseCookie(res, token);
+    /* creating a new token for update user info is optional..
+    Have removed new token creation and re-sending token via res.status */
     res.status(StatusCodes.OK).json({ user, location: user.location });
-    // console.log(req.user);
-    // res.send("Update user");
   } catch (error) {
     next(error);
   }
-
-  // res.end();
 };
-
 const listUsers = async (req, res, next) => {
   const { role } = req.body;
   if (!role && !role == "supervisor") {
@@ -123,9 +107,9 @@ const listUsers = async (req, res, next) => {
   try {
     const users = await User.find({ role: "user" });
     res.status(StatusCodes.OK).json({ userRoles: users });
-    // console.log(users);
   } catch (error) {
     next(error);
+    return;
   }
 };
 export { register, login, updateUser, listUsers, getCurrentUser };

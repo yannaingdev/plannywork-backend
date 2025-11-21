@@ -9,7 +9,7 @@
 
 ## General Info :clipboard:
 
-This is the jobsheets dashboard application mainly powered by Node.js(backend) and ReactJS(Backend). The Backend Server' core features are to handle user' role based authenication and RESTful API calls. State management in UI is used react context.
+This is the jobsheets dashboard application mainly powered by Node.js(backend). The Backend Server's core features are to handle user' role based authenication and RESTful API calls.
 
 The app allow users to manage jobsheets for Field Service Engineers and Application Specialist for Medical Company and to provide consolidated view of jobsheets to their respective supervisor.
 
@@ -27,6 +27,8 @@ username/password show as below.
 ```
 
 ![Landing Page](https://raw.githubusercontent.com/thonenyastack/PlannyWorkFullStackApp/develop/UI_Demo_Images/landingpage.png)
+
+![Landing Page](https://raw.githubusercontent.com/yn-developer/plannywork-backend/main/UI_DEMO_Images/landingpage.png)
 
 ![Overview](https://raw.githubusercontent.com/thonenyastack/PlannyWorkFullStackApp/develop/UI_Demo_Images/overviewnew.png)
 

@@ -5,7 +5,6 @@ const JobSchema = new mongoose.Schema(
   {
     jobSheetNo: {
       type: String,
-      // required: [true, "Please provide Jobsheet Number"],
       validate(value) {
         if (!validator.isNumeric(value) || validator.isEmpty(value)) {
           throw Error("Invalid Entry");
@@ -20,9 +19,8 @@ const JobSchema = new mongoose.Schema(
           throw Error("Invalid Job Title");
         }
       },
-      // required: [true, "Please provide Jobsheet Name"],
     },
-    jobDescripton: {
+    jobDescription: {
       type: String,
       minlength: 6,
     },
@@ -32,17 +30,12 @@ const JobSchema = new mongoose.Schema(
     },
     company: {
       type: String,
-
       validate(value) {
         if (!validator.isLength(value, { min: 3, max: 100 })) {
           throw Error("No Short Form,Fill in Complete Company Name");
         }
       },
-      // required: [true, "Please provide company name"],
-      // minlength: 3,
-      // maxlength: 100,
     },
-
     jobLocation: {
       type: String,
       default: "Yangon",
@@ -56,7 +49,7 @@ const JobSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["completed", "ongoing"],
-      default: "completed",
+      default: "ongoing",
     },
     start: {
       type: String,
@@ -66,6 +59,10 @@ const JobSchema = new mongoose.Schema(
     },
     duration: {
       type: String,
+    },
+    jobDate: {
+      type: Date,
+      default: Date.now,
     },
     attachedFileName: {
       type: String,

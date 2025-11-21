@@ -42,21 +42,22 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "user",
-    enum: ["user", "supervisor", "admin"],
+    enum: ["user", "supervisor", "admin"], //pitfall: the user can assume only one role a time
   },
 });
 
-// mongoDB pre save Hooks to pre-validate if the password field is being modified
-UserSchema.pre("save", async function () {
+/* mongoDB pre save Hooks to pre-validate if the password field is being modified */
+/* UserSchema.pre("save", async function () {
   if (!this.isModified("password")) {
     return;
   }
-
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-});
+}); */
 
-// Use MongoDB instance methods schema.methods.customfunction create JWT
+/* Use MongoDB instance methods schema.methods.customfunction create JWT 
+   Alternatively: handle this logic in function(login) in authController 
+*/
 UserSchema.methods.createJWT = function () {
   return jwt.sign({ userId: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_LIFETIME,

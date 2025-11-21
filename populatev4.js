@@ -4,16 +4,21 @@ import dotenv from "dotenv";
 
 import connectDB from "./db/connect.js";
 import Job from "./model/Job.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 
 const url = process.env.dbconnectionString;
 
 const start = async () => {
-  console.log(process.env.dbconnectionString);
   try {
-    connectDB(url);
-    await Job.deleteMany();
+    // await connectDB(url);
+    // await Job.deleteMany();
+    await mongoose.connect(url, {
+      dbName: "plannywork",
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
     let jsonJobs = JSON.parse(
       await readFile(
         new URL("./MOCK_DATA/MOCK_DATA_JOBSHEET_V3.json", import.meta.url)

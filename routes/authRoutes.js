@@ -9,6 +9,7 @@ import authenticateUser from "../middleware/authenticateUser.js";
 import express from "express";
 const router = express.Router();
 
+/* all the route after the path "/api/v1/auth" will be handled by router */
 router.route("/register").post(register);
 router.route("/login").post(login);
 router.route("/updateUser").patch(authenticateUser, updateUser);

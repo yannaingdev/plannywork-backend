@@ -1,15 +1,13 @@
 import { StatusCodes } from "http-status-codes";
 
+/* Custom Error handler middleware for ExpressJS */
 const errorHandlerMiddleware = (err, req, res, next) => {
-  // console.log(err.message);
-  // res.status(500).json({ msg: "there was an error" });
   const defaultError = {
     statusCode: err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
     msg: err.message || "Something went wrong, try again later",
   };
   if (err.name === "ValidationError") {
     defaultError.statusCode = StatusCodes.BAD_REQUEST;
-    // defaultError.msg = err.message;
     defaultError.msg = Object.values(err.errors)
       .map((item) => item.message)
       .join(",");
@@ -18,11 +16,8 @@ const errorHandlerMiddleware = (err, req, res, next) => {
     defaultError.statusCode = StatusCodes.BAD_REQUEST;
     defaultError.msg = `${Object.keys(err.keyValue)} field has to be unique`;
   }
-
-  // res.status(defaultError.statusCode).json({ msg: err });
   res.status(defaultError.statusCode).json({ msg: defaultError.msg });
   next();
-  // return;
 };
 
 export default errorHandlerMiddleware;

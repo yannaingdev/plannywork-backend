@@ -3,7 +3,7 @@
 /client/node_modules
 /MOCK_DATA
 populatev3.js
-/uploads
-.env
+# /uploads
 /client/src/dist/
-/client/public/uploads
+/client/src/assets/uploads
+.env

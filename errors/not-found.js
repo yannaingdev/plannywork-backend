@@ -4,7 +4,7 @@ import { StatusCodes } from "http-status-codes";
 class NotFoundError extends CustomAPIError {
   constructor(message) {
     super(message);
-    this.StatusCodes = StatusCodes.NOT_FOUND;
+    this.StatusCodes = StatusCodes.NOT_FOUND; //StatusCodes should be statusCode for consistency.
   }
 }
 

@@ -1,83 +1,97 @@
-import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import morgan from "morgan";
+import "express-async-errors";
+import path from "path";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser";
+import session from "express-session";
+import MongoStore from "connect-mongo";
 import connectDB from "./db/connect.js";
 import authRoutes from "./routes/authRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import errorHandlerMiddleware from "./middleware/errorHandlerMiddleware.js";
 import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
 import authenticateUser from "./middleware/authenticateUser.js";
-import dotenv from "dotenv";
-import morgan from "morgan";
-import "express-async-errors";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import path from "path";
-import cookieParser from "cookie-parser";
+import { corsOptions } from "./config/corsOptions.js";
+import {
+  sanitizeMiddleware,
+  validateRegisterInput,
+  validateUserLoginInput,
+} from "./middleware/sanitize.js";
+import verifySession from "./middleware/verifySession.js";
 
 mongoose.set("strictQuery", true);
-
 const app = express();
 dotenv.config();
-
-// Monolothic Alike Deployment Approach/Style
+app.use(cors());
+app.use(sanitizeMiddleware);
+app.use(express.json());
+app.use(cookieParser());
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// app.use(express.static(path.resolve(__dirname, "./client/build")));
-app.use(express.static(path.resolve(__dirname, "./client/src/dist")));
+app.use(
+  session({
+    name: "sessionIdKey",
+    secret: "endurancemethod",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: `${process.env.dbconnectionString}`,
+      dbName: "plannywork",
+      collectionName: "appSessions",
+      autoRemove: "native",
+    }),
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 2,
+      httpOnly: true,
+      domain: "localhost",
+      sameSite: "Lax",
+    },
+  })
+);
 app.use(
   "/uploads",
-  express.static(path.resolve(__dirname, "./client/public/uploads"))
+  express.static(path.resolve(__dirname, "/client/public/uploads"))
 );
-
-// process.env.NODE_ENV = "production";
-// Mount HTTP request logging middleware
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
-
-app.use(cors());
-app.use(express.json());
-app.use(cookieParser());
-
 app.get("/api/v1", (req, res) => {
-  // throw new Error("error");
-  res.send({ msg: "WorkPlanner App API Root" });
+  res.send({
+    status: "success",
+    msg: "WorkPlanner App API Root",
+    version: "1.0.0",
+    uptime: process.uptime(),
+    timeStamp: new Date().toISOString(),
+    endpoints: {
+      jobs: "/api/v1/jobs",
+      users: "/api/v1/users",
+    },
+  });
 });
-
-// mount the authRoute, & Pass middleware function for specified request path
 app.use("/api/v1/auth", authRoutes);
-// mount the jobRoutes, Authenicate the user function middleware for specified requested path
-app.use("/api/v1/jobs", authenticateUser, jobRoutes);
-
-// Monolothic Deployment Approach
-app.get("*", (req, res) => {
-  // res.sendFile(path.resolve(__dirname, "./client/build", "index.html"));
-  res.sendFile(path.resolve(__dirname, "./client/src/dist", "index.html"));
-});
-
-/* If none of the above route match, treat them as not found
-mount the generic errorHandler middleware to handle all error: response generalization */
-app.use(errorHandlerMiddleware);
-
-// If none of the above route match, treat them as not found
+app.use("/api/v1/jobs", verifySession, jobRoutes);
+/* a generic errorHandler middleware to handle all error: response generalization */
 app.use(notFoundMiddleware);
-
-//
-
-const port = process.env.PORT || 5000;
+app.use(errorHandlerMiddleware);
+const port = process.env.PORT || 5100;
 const url = process.env.dbconnectionString;
-
-const start = async () => {
+const startServer = async () => {
   try {
     connectDB(url);
     app.listen(port, () => {
+      console.log(`Running in ${process.env.NODE_ENV} environment`);
       console.log(`Server listening on port ${port}`);
-      // console.log(process.env.NODE_ENV.trim());
-      // console.log(`Current Directory: ${__dirname}`);
     });
   } catch (error) {
     console.error(error);
   }
 };
+startServer();
 
-start();
+/* app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "./client/src/dist", "index.html"));
+}); */
