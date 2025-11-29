@@ -7,6 +7,7 @@ import {
 } from "../controllers/authController.js";
 import authenticateUser from "../middleware/authenticateUser.js";
 import express from "express";
+import verifySession from "../middleware/verifySession.js";
 const router = express.Router();
 
 /* all the route after the path "/api/v1/auth" will be handled by router */
@@ -14,6 +15,6 @@ router.route("/register").post(register);
 router.route("/login").post(login);
 router.route("/updateUser").patch(authenticateUser, updateUser);
 router.route("/listusers").get(authenticateUser, listUsers);
-router.route("/getCurrentUser").get(authenticateUser, getCurrentUser);
+router.route("/getCurrentUser").get(verifySession, getCurrentUser);
 
 export default router;

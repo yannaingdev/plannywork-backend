@@ -68,7 +68,6 @@ const updateJob = async (req, res, next) => {
 const getUserJobs = async (req, res) => {
   const { id: userId } = req.params;
   console.log(req.query.id, userId);
-
   const jobs = await Job.find({ createdBy: userId });
   if (!jobs) {
     throw new NotFoundError("No Job Found");
@@ -77,12 +76,18 @@ const getUserJobs = async (req, res) => {
 };
 const getAllJobs = async (req, res) => {
   const { status, jobType, sort, search, page } = req.query;
+  const userEmail = req.session?.user?.email;
+  const user = await User.findOne({ email: userEmail }).lean().exec();
+  // const userId = user._id.toString();
+  if (!user) {
+    return res.status(404).json({ message: "user not found" });
+  }
   let queryLimit = 10;
-  let skipQuery = 0;
+  let querySkip = 0;
   const pageNum = Number(page) || 1;
   // Todo: Add Role to queryObject
   const queryObject = {
-    createdBy: req.user.userId,
+    createdBy: user._id,
   };
   if (status && status !== "all") {
     queryObject.status = status;
@@ -96,7 +101,6 @@ const getAllJobs = async (req, res) => {
   let result = Job.find(queryObject);
   const totalJobs = await Job.countDocuments(queryObject);
   const numOfPages = Math.ceil(totalJobs / queryLimit);
-
   if (sort === "latest") {
     result = result.sort("-jobDate");
   }
@@ -109,14 +113,27 @@ const getAllJobs = async (req, res) => {
   if (sort === "z-a") {
     result = result.sort("-position");
   }
-  skipQuery = (pageNum - 1) * 10;
-  result = result.skip(skipQuery).limit(queryLimit);
+  querySkip = (pageNum - 1) * queryLimit;
+  result = result.skip(querySkip).limit(queryLimit);
   const jobs = await result;
   res.status(StatusCodes.OK).json({ jobs, totalJobs, numOfPages });
+};
+const getJob = async (req, res) => {
+  const { id: jobId } = req.params;
+  try {
+    const job = await Job.findById({ _id: jobId });
+    if (!job) {
+      throw new NotFoundError("job not found");
+    }
+    res.status(200).json({ job });
+  } catch (error) {
+    console.log(error);
+  }
 };
 const showStats = async (req, res) => {
   const userEmail = req.session?.user?.email;
   const user = await User.findOne({ email: userEmail }).lean().exec();
+  console.log(userEmail, user);
   // const userId = user._id.toString();
   if (!user) {
     return res.status(404).json({ message: "user not found" });
@@ -197,4 +214,12 @@ const deleteJob = async (req, res) => {
   res.status(StatusCodes.OK).json({ msg: "Job Deleted" });
 };
 
-export { createJob, getUserJobs, getAllJobs, showStats, deleteJob, updateJob };
+export {
+  createJob,
+  getUserJobs,
+  getAllJobs,
+  getJob,
+  showStats,
+  deleteJob,
+  updateJob,
+};

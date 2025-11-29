@@ -10,6 +10,7 @@ import {
   getUserJobs,
   updateJob,
   showStats,
+  getJob,
 } from "../controllers/jobController.js";
 
 import multer from "multer";
@@ -43,10 +44,11 @@ function fileUpdateCheck(req, res) {
   console.log(req.file);
 }
 router.route("/").post(upload.single("attachedFile"), createJob);
+router.route("/").get(getAllJobs);
+router.route("/:id").get(getJob);
 router.route("/:id").patch(upload.single("attachedFile"), updateJob);
 /* refactor into main and sub-path for sending user jobs and supervisor job */
-router.route("/stats").get(showStats);
-router.route("/").get(getAllJobs);
+router.route("/stats/").get(showStats);
 // router.route("/:id").get(getUserJobs);
 router.route("/user").get(getUserJobs);
 router.route("/:id").delete(deleteJob);

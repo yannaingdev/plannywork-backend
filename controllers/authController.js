@@ -29,23 +29,20 @@ const register = async (req, res, next) => {
 };
 const login = async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(password);
   if (!email || !password) {
     const error = new UnAuthorizedRequest("Plese provide all fields..");
     return next(error);
   }
   try {
     const user = await User.findOne({ email }).select("+password");
-    console.log(user);
     if (!user) {
-      const error = new UnAuthorizedRequest("Invalid Login Request.");
+      const error = new UnAuthorizedRequest("Invalid Login Request 1.");
       return next(error);
     }
     /* comparePassword function of user object returned from User model 
        is invoked and validate password provided 
     */
     const isPasswordCorrect = await user.comparePassword(password);
-    console.log(isPasswordCorrect);
     if (isPasswordCorrect === true) {
       // const token = user.createJWT();
       user.password = undefined;
@@ -68,10 +65,13 @@ const login = async (req, res, next) => {
   }
 };
 const getCurrentUser = async (req, res, next) => {
-  const user = await User.findOne({ _id: req.user.userId });
-  res
-    .status(StatusCodes.OK)
-    .json({ user, role: user.role, location: user.location });
+  // const user = await User.findOne({ _id: req.user.userId });
+  const userEmail = req.session?.user?.email;
+  const user = await User.findOne({ email: userEmail }).lean().exec();
+  if (!user) {
+    return res.status(404).json({ message: "not logged in" });
+  }
+  res.status(200).json({ user, role: user.role, location: user.location });
 };
 const updateUser = async (req, res, next) => {
   const { email, name, lastName, location } = req.body;

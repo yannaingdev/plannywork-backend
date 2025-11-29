@@ -13,6 +13,7 @@ import MongoStore from "connect-mongo";
 import connectDB from "./db/connect.js";
 import authRoutes from "./routes/authRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
+import statsRoutes from "./routes/stats.route.js";
 import errorHandlerMiddleware from "./middleware/errorHandlerMiddleware.js";
 import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
 import authenticateUser from "./middleware/authenticateUser.js";
@@ -27,7 +28,7 @@ import verifySession from "./middleware/verifySession.js";
 mongoose.set("strictQuery", true);
 const app = express();
 dotenv.config();
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(sanitizeMiddleware);
 app.use(express.json());
 app.use(cookieParser());
@@ -47,7 +48,7 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 2,
       httpOnly: true,
-      domain: "localhost",
+      // domain: "localhost", /* browser ignore cookie expiration if localhost used */
       sameSite: "Lax",
     },
   })
@@ -74,6 +75,7 @@ app.get("/api/v1", (req, res) => {
 });
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", verifySession, jobRoutes);
+app.use("/api/v1/stats", verifySession, statsRoutes);
 /* a generic errorHandler middleware to handle all error: response generalization */
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
