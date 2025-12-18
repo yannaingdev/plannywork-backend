@@ -64,6 +64,14 @@ const login = async (req, res, next) => {
     next(error);
   }
 };
+const logout = async (req, res, next) => {
+  req.session.destroy(function (error) {
+    if (error) {
+      return res.status(500).json({ message: "auth error" });
+    }
+  });
+  res.status(200).json({ message: "success" });
+};
 const getCurrentUser = async (req, res, next) => {
   // const user = await User.findOne({ _id: req.user.userId });
   const userEmail = req.session?.user?.email;
@@ -112,4 +120,4 @@ const listUsers = async (req, res, next) => {
     return;
   }
 };
-export { register, login, updateUser, listUsers, getCurrentUser };
+export { register, login, logout, updateUser, listUsers, getCurrentUser };

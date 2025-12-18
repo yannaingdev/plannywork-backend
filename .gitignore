@@ -7,3 +7,4 @@ populatev3.js
 /client/src/dist/
 /client/src/assets/uploads
 .env
+/uploads

@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import { showStats } from "../controllers/jobController.js";
+import { getStats } from "../controllers/jobController.js";
 
-router.route("/").get(showStats);
+router.route("/").get(getStats);
 export default router;

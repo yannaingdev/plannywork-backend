@@ -16,7 +16,13 @@ const createJob = async (req, res, next) => {
     const error = new BadRequestError(`Please provide all fields`);
     return next(error);
   }
-  req.body.createdBy = req.user.userId;
+  const userEmail = req.session?.user?.email;
+  const user = await User.findOne({ email: userEmail }).lean().exec();
+  if (!user) {
+    return res.status(404).json({ message: "user not found" });
+  }
+  const userId = user._id.toString();
+  req.body.createdBy = userId;
   req.body.attachedFileName = attachedFileName;
   req.body.jobDate = dateObj;
   try {
@@ -66,8 +72,7 @@ const updateJob = async (req, res, next) => {
   }
 };
 const getUserJobs = async (req, res) => {
-  const { id: userId } = req.params;
-  console.log(req.query.id, userId);
+  const userId = req.session.user.id;
   const jobs = await Job.find({ createdBy: userId });
   if (!jobs) {
     throw new NotFoundError("No Job Found");
@@ -78,7 +83,6 @@ const getAllJobs = async (req, res) => {
   const { status, jobType, sort, search, page } = req.query;
   const userEmail = req.session?.user?.email;
   const user = await User.findOne({ email: userEmail }).lean().exec();
-  // const userId = user._id.toString();
   if (!user) {
     return res.status(404).json({ message: "user not found" });
   }
@@ -118,7 +122,7 @@ const getAllJobs = async (req, res) => {
   const jobs = await result;
   res.status(StatusCodes.OK).json({ jobs, totalJobs, numOfPages });
 };
-const getJob = async (req, res) => {
+const getJobDetail = async (req, res) => {
   const { id: jobId } = req.params;
   try {
     const job = await Job.findById({ _id: jobId });
@@ -130,7 +134,7 @@ const getJob = async (req, res) => {
     console.log(error);
   }
 };
-const showStats = async (req, res) => {
+const getStats = async (req, res) => {
   const userEmail = req.session?.user?.email;
   const user = await User.findOne({ email: userEmail }).lean().exec();
   console.log(userEmail, user);
@@ -213,13 +217,12 @@ const deleteJob = async (req, res) => {
   await job.remove();
   res.status(StatusCodes.OK).json({ msg: "Job Deleted" });
 };
-
 export {
   createJob,
   getUserJobs,
   getAllJobs,
-  getJob,
-  showStats,
+  getJobDetail,
+  getStats,
   deleteJob,
   updateJob,
 };

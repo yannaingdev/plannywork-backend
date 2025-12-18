@@ -14,9 +14,9 @@ import connectDB from "./db/connect.js";
 import authRoutes from "./routes/authRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import statsRoutes from "./routes/stats.route.js";
+import userJobRoute from "./routes/user.jobs.route.js";
 import errorHandlerMiddleware from "./middleware/errorHandlerMiddleware.js";
 import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
-import authenticateUser from "./middleware/authenticateUser.js";
 import { corsOptions } from "./config/corsOptions.js";
 import {
   sanitizeMiddleware,
@@ -76,6 +76,7 @@ app.get("/api/v1", (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", verifySession, jobRoutes);
 app.use("/api/v1/stats", verifySession, statsRoutes);
+app.use("/api/v1/user", verifySession, userJobRoute);
 /* a generic errorHandler middleware to handle all error: response generalization */
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);

@@ -1,6 +1,7 @@
 import {
   register,
   login,
+  logout,
   updateUser,
   listUsers,
   getCurrentUser,
@@ -13,6 +14,7 @@ const router = express.Router();
 /* all the route after the path "/api/v1/auth" will be handled by router */
 router.route("/register").post(register);
 router.route("/login").post(login);
+router.route("/logout").post(logout);
 router.route("/updateUser").patch(authenticateUser, updateUser);
 router.route("/listusers").get(authenticateUser, listUsers);
 router.route("/getCurrentUser").get(verifySession, getCurrentUser);

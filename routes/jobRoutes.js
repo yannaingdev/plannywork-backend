@@ -7,10 +7,8 @@ import {
   createJob,
   deleteJob,
   getAllJobs,
-  getUserJobs,
   updateJob,
-  showStats,
-  getJob,
+  getJobDetail,
 } from "../controllers/jobController.js";
 
 import multer from "multer";
@@ -19,7 +17,7 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // have to adjust for vite config
     // cb(null, path.resolve(__dirname, "../client/public/uploads"));
-    cb(null, path.resolve(__dirname, "../client/src/assets/uploads"));
+    cb(null, path.resolve(__dirname, "../uploads"));
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + "--" + file.originalname);
@@ -45,12 +43,8 @@ function fileUpdateCheck(req, res) {
 }
 router.route("/").post(upload.single("attachedFile"), createJob);
 router.route("/").get(getAllJobs);
-router.route("/:id").get(getJob);
+router.route("/:id").get(getJobDetail);
 router.route("/:id").patch(upload.single("attachedFile"), updateJob);
 /* refactor into main and sub-path for sending user jobs and supervisor job */
-router.route("/stats/").get(showStats);
-// router.route("/:id").get(getUserJobs);
-router.route("/user").get(getUserJobs);
 router.route("/:id").delete(deleteJob);
-// router.route("/:id").patch(fileUpdateCheck, updateJob);
 export default router;
