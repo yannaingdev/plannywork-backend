@@ -4,7 +4,8 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import path from "path";
 import {
-  createJob,
+  saveJobDraft,
+  submitJob,
   deleteJob,
   getAllJobs,
   updateJob,
@@ -38,10 +39,9 @@ const fileFilter = (req, file, cb) => {
     cb(null, false);
   }
 };
-function fileUpdateCheck(req, res) {
-  console.log(req.file);
-}
-router.route("/").post(upload.single("attachedFile"), createJob);
+
+router.route("/draft").post(upload.none(), saveJobDraft);
+router.route("/:id/submit").post(submitJob);
 router.route("/").get(getAllJobs);
 router.route("/:id").get(getJobDetail);
 router.route("/:id").patch(upload.single("attachedFile"), updateJob);

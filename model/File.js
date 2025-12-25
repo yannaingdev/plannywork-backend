@@ -28,8 +28,12 @@ const FileSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["PENDING", "UPLOADING", "COMPLETED"],
+      enum: ["PENDING", "UPLOADING", "UPLOADED", "FAILED"],
       default: "PENDING",
+    },
+    statusUpdatedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true }

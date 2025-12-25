@@ -20,10 +20,10 @@ export const generateUploadUrls = async (req, res, next) => {
   if (!job) {
     return res.status(404).json({ message: "job not found" });
   }
-  if (canTransition(job.status, "UPLOADING")) {
+  /*   if (canTransition(job.status, "UPLOADING")) {
     job.status = "UPLOADING";
     await job.save();
-  }
+  } */
   const uploadUrls = await Promise.all(
     files.map(async (file) => {
       const key = `uploads/${uuidv4()}`;

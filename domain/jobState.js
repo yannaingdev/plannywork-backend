@@ -6,9 +6,13 @@ export const JobStates = {
   FAILED: "FAILED",
 };
 export const JobStateTransitions = {
+  DRAFT: ["READY"],
+};
+
+/* export const JobStateTransitions = {
   DRAFT: ["CREATED"],
   CREATED: ["UPLOADING", "FAILED"],
   UPLOADING: ["READY", "FAILED"],
   READY: [],
   FAILED: [],
-};
+}; */

@@ -7,25 +7,27 @@ import mongoose from "mongoose";
 import path from "path";
 import fs from "fs";
 import autoCatch from "../utils/autoCatch.js";
-const createJob = async (req, res, next) => {
-  const { jobSheetNo, jobName, company, date } = req.body;
-  const cleanDate = JSON.parse(date);
-  const dateObj = new Date(cleanDate);
-  const attachedFileName = req.file.filename;
-  if (!jobSheetNo || !jobName || !company || !attachedFileName) {
-    const error = new BadRequestError(`Please provide all fields`);
+import getUserSession from "../utils/getUserSession.js";
+const saveJobDraft = async (req, res, next) => {
+  const { jobSheetNo, date } = req.body;
+  console.log({ jobSheetNo });
+  if (!jobSheetNo) {
+    const error = new BadRequestError(`Please provide required fields`);
     return next(error);
   }
-  const userEmail = req.session?.user?.email;
-  const user = await User.findOne({ email: userEmail }).lean().exec();
-  if (!user) {
-    return res.status(404).json({ message: "user not found" });
+  try {
+    const userId = await getUserSession(req);
+    const userIdFormatted = userId.toString();
+    req.body.createdBy = userIdFormatted;
+  } catch (error) {
+    next(error);
   }
-  const userId = user._id.toString();
-  req.body.createdBy = userId;
-  // req.body.attachedFileName = attachedFileName;
-  req.body.jobState = "created";
-  req.body.jobDate = dateObj;
+  // req.body.jobState = "DRAFT";
+  if (date) {
+    const cleanDate = JSON.parse(date);
+    const dateObj = new Date(cleanDate);
+    req.body.jobDate = dateObj;
+  }
   try {
     const job = await Job.create(req.body);
     if (job) {
@@ -35,7 +37,9 @@ const createJob = async (req, res, next) => {
     next(error);
   }
 };
-
+const submitJob = async (req, res, next) => {
+  const { id: jobId } = req.params;
+};
 const updateJob = async (req, res, next) => {
   // const session = await mongoose.startSession();
   const { id: jobId } = req.params;
@@ -220,7 +224,8 @@ const deleteJob = async (req, res) => {
   res.status(StatusCodes.OK).json({ msg: "Job Deleted" });
 };
 export {
-  createJob,
+  saveJobDraft,
+  submitJob,
   getUserJobs,
   getAllJobs,
   getJobDetail,
