@@ -3,12 +3,12 @@ import mongoose from "mongoose";
 const FileSchema = new mongoose.Schema(
   {
     ownerId: {
-      type: mongoose.SchemaType.Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       ref: "User",
       required: true,
     },
     jobId: {
-      type: mongoose.SchemaType.Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       ref: "Job",
       required: true,
     },

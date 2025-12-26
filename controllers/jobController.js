@@ -10,7 +10,6 @@ import autoCatch from "../utils/autoCatch.js";
 import getUserSession from "../utils/getUserSession.js";
 const saveJobDraft = async (req, res, next) => {
   const { jobSheetNo, date } = req.body;
-  console.log({ jobSheetNo });
   if (!jobSheetNo) {
     const error = new BadRequestError(`Please provide required fields`);
     return next(error);

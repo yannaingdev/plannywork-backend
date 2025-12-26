@@ -11,7 +11,7 @@ import {
   updateJob,
   getJobDetail,
 } from "../controllers/jobController.js";
-
+import { generateUploadUrls } from "../controllers/fileController.js";
 import multer from "multer";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const storage = multer.diskStorage({
@@ -41,6 +41,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 router.route("/draft").post(upload.none(), saveJobDraft);
+router.route("/:jobId/intents").post(generateUploadUrls);
 router.route("/:id/submit").post(submitJob);
 router.route("/").get(getAllJobs);
 router.route("/:id").get(getJobDetail);

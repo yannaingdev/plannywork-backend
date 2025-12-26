@@ -1,7 +1,6 @@
 import User from "../model/User.js";
 const getUserSession = async (req) => {
   console.log("testing");
-  console.log({ session: req.session.user.email });
   const userEmail = req.session?.user?.email;
   if (!userEmail) {
     const err = new Error("User not Authenicated");

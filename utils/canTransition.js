@@ -1,4 +1,4 @@
-import { JobStateTransitions } from "../domain/jobState";
+import { JobStateTransitions } from "../domain/jobState.js";
 
 export function canTransition(from, to) {
   const allowedNextStates = JobStateTransitions[from];

@@ -4,22 +4,31 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-const { v4: uuidv4 } = require("uuid");
+import { v4 as uuidv4 } from "uuid";
 import { S3Client } from "@aws-sdk/client-s3";
-import { canDeleteFile, canReadFile } from "../utils/filePermissions";
-import Job from "../model/Job";
-import { canTransition } from "../utils/canTransition";
-const s3 = new S3Client({ region: process.env.AWS_REGION });
-
-const File = require("../model/File");
+import { canDeleteFile, canReadFile } from "../utils/filePermissions.js";
+import Job from "../model/Job.js";
+import File from "../model/File.js";
+import { canTransition } from "../utils/canTransition.js";
+import getUserSession from "../utils/getUserSession.js";
+console.log({
+  key: process.env.AWS_ACCESS_KEY_ID,
+  secret: process.env.AWS_SECRET_ACCESS_KEY?.slice(0, 4),
+});
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
+});
 export const generateUploadUrls = async (req, res, next) => {
   const { jobId } = req.params;
   const files = req.body;
-
   const job = await Job.findById({ _id: jobId });
   if (!job) {
     return res.status(404).json({ message: "job not found" });
   }
+  const userId = await getUserSession(req);
+  // const userIdFormatted = userId.toString;
   /*   if (canTransition(job.status, "UPLOADING")) {
     job.status = "UPLOADING";
     await job.save();
@@ -40,9 +49,11 @@ export const generateUploadUrls = async (req, res, next) => {
       const command = new PutObjectCommand({
         Bucket: record.bucket,
         Key: record.s3Key,
-        ContentType: record.mimeType,
+        // ContentType: record.mimeType,
+        // ChecksumAlgorithm: undefined,
+        // SDKChecksumAlgorithm: undefined,
       });
-      const signedUrl = await getSignedUrl(s3, command, { expiresIn: 120 });
+      const signedUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
       return {
         fileId: record._id,
         signedUrl,

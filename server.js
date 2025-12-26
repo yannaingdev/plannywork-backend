@@ -13,6 +13,7 @@ import MongoStore from "connect-mongo";
 import connectDB from "./db/connect.js";
 import authRoutes from "./routes/authRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
+import fileStorageRoute from "./routes/filestorage.route.js";
 import statsRoutes from "./routes/stats.route.js";
 import userJobRoute from "./routes/user.jobs.route.js";
 import errorHandlerMiddleware from "./middleware/errorHandlerMiddleware.js";
@@ -75,6 +76,7 @@ app.get("/api/v1", (req, res) => {
 });
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", verifySession, jobRoutes);
+app.use("/api/v1/files", verifySession, fileStorageRoute);
 app.use("/api/v1/stats", verifySession, statsRoutes);
 app.use("/api/v1/user", verifySession, userJobRoute);
 /* a generic errorHandler middleware to handle all error: response generalization */
