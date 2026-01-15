@@ -16,6 +16,7 @@ import jobRoutes from "./routes/jobRoutes.js";
 import fileStorageRoute from "./routes/filestorage.route.js";
 import statsRoutes from "./routes/stats.route.js";
 import userJobRoute from "./routes/user.jobs.route.js";
+import mountKeyAccountFeature from "./keyAccountFeature.js";
 import errorHandlerMiddleware from "./middleware/errorHandlerMiddleware.js";
 import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
 import { corsOptions } from "./config/corsOptions.js";
@@ -79,6 +80,7 @@ app.use("/api/v1/jobs", verifySession, jobRoutes);
 app.use("/api/v1/files", verifySession, fileStorageRoute);
 app.use("/api/v1/stats", verifySession, statsRoutes);
 app.use("/api/v1/user", verifySession, userJobRoute);
+mountKeyAccountFeature(app);
 /* a generic errorHandler middleware to handle all error: response generalization */
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
