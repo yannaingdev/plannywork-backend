@@ -8,6 +8,8 @@ import mongoose from "mongoose";
 import path from "path";
 import fs from "fs";
 import getUserSession from "../utils/getUserSession.js";
+import { transitionJob } from "../utils/transitionJob.js";
+import { JobStates } from "../domain/jobState.js";
 import autoCatch from "../utils/autoCatch.js";
 import createQueryObject from "../utils/createQueryObject.js";
 const saveJobDraft = async (req, res, next) => {
@@ -45,7 +47,17 @@ const submitJob = async (req, res, next) => {
     if (!job) {
       throw new NotFoundError("No Job Found");
     }
+    /* fetch related files for the job */
     const files = await File.find({ jobId });
+    const hasIncompleteFiles = files.some((file) => file.status !== "UPLOADED");
+    if (hasIncompleteFiles) {
+      return res.status(400).json({
+        message: "All files must be uploaded before submitting the job",
+      });
+    }
+    /* Transition the job state */
+    await transitionJob(job, JobStates.READY);
+    return res.status(200).json({ job });
   } catch (error) {
     next(error);
   }
