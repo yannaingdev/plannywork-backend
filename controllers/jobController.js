@@ -1,4 +1,5 @@
 import Job from "../model/Job.js";
+import File from "../model/File.js";
 import User from "../model/User.js";
 import { StatusCodes } from "http-status-codes";
 import { BadRequestError, NotFoundError } from "../errors/ErrorIndex.js";
@@ -6,12 +7,11 @@ import checkAuthorization from "../utils/checkAuthorization.js";
 import mongoose from "mongoose";
 import path from "path";
 import fs from "fs";
-import autoCatch from "../utils/autoCatch.js";
 import getUserSession from "../utils/getUserSession.js";
+import autoCatch from "../utils/autoCatch.js";
 import createQueryObject from "../utils/createQueryObject.js";
 const saveJobDraft = async (req, res, next) => {
   const { jobSheetNo, jobDate } = req.body;
-  console.log(jobSheetNo, jobDate);
   if (!jobSheetNo) {
     const error = new BadRequestError(`Please provide required fields`);
     return next(error);
@@ -39,7 +39,16 @@ const saveJobDraft = async (req, res, next) => {
   }
 };
 const submitJob = async (req, res, next) => {
-  const { id: jobId } = req.params;
+  const { jobId } = req.params;
+  try {
+    const job = await Job.findById({ _id: jobId });
+    if (!job) {
+      throw new NotFoundError("No Job Found");
+    }
+    const files = await File.find({ jobId });
+  } catch (error) {
+    next(error);
+  }
 };
 const updateJob = async (req, res, next) => {
   // const session = await mongoose.startSession();
@@ -86,10 +95,8 @@ const getUserJobs = async (req, res) => {
   }
   res.status(StatusCodes.OK).json({ jobs });
 };
-
 const getAllJobs = async (req, res) => {
   const { status, jobType, sort, search, page } = req.query;
-  // console.log("getAlljob", { status }, { jobType });
   const userEmail = req.session?.user?.email;
   const user = await User.findOne({ email: userEmail }).lean().exec();
   if (!user) {
@@ -102,20 +109,16 @@ const getAllJobs = async (req, res) => {
   const queryObject = {
     createdBy: user._id,
   };
-  // const queryObject = createQueryObject(user, status, jobType, sort);
-  console.log(queryObject);
-
   if (status && status !== "all") {
     queryObject.status = status;
   }
   if (jobType && jobType !== "all") {
     queryObject.jobType = jobType;
-    console.log("jobType added queryObject", queryObject);
   }
   if (search) {
-    queryObject.company = { $regex: search, $options: "i" };
+    queryObject.jobName = { $regex: search, $options: "i" };
   }
-  console.log("queryObject", queryObject);
+  // console.log("queryObject", queryObject);
   let result = Job.find(queryObject);
   const totalJobs = await Job.countDocuments(queryObject);
   const numOfPages = Math.ceil(totalJobs / queryLimit);

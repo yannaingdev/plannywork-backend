@@ -41,8 +41,8 @@ const fileFilter = (req, file, cb) => {
 };
 
 router.route("/draft").post(upload.none(), saveJobDraft);
+router.route("/:jobId/submit").post(submitJob);
 router.route("/:jobId/intents").post(generateUploadUrls);
-router.route("/:id/submit").post(submitJob);
 router.route("/").get(getAllJobs);
 router.route("/:id").get(getJobDetail);
 router.route("/:id").patch(upload.single("attachedFile"), updateJob);

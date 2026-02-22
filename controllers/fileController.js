@@ -59,7 +59,7 @@ export const generateUploadUrls = async (req, res, next) => {
         signedUrl,
         s3Key: record.s3Key,
       };
-    })
+    }),
   );
   res.status(200).json(uploadUrls);
 };
@@ -93,4 +93,16 @@ export const fileDelete = async (req, res, next) => {
   await s3.send(command);
   await file.deleteOne();
   res.status(204).json({ message: "file deleted" });
+};
+export const updateFileStatus = async (req, res, next) => {
+  const { fileId } = req.params;
+  const updateFields = req.body;
+  console.log(fileId, updateFields);
+  const fileFound = await File.findOne({ _id: fileId });
+  if (!fileFound) {
+    return res.status(404).json({ message: "file not found" });
+  }
+  Object.assign(fileFound, updateFields);
+  await fileFound.save();
+  res.sendStatus(204);
 };
