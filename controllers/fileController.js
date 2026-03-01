@@ -11,10 +11,10 @@ import Job from "../model/Job.js";
 import File from "../model/File.js";
 import { canTransition } from "../utils/canTransition.js";
 import getUserSession from "../utils/getUserSession.js";
-console.log({
+/* console.log({
   key: process.env.AWS_ACCESS_KEY_ID,
   secret: process.env.AWS_SECRET_ACCESS_KEY?.slice(0, 4),
-});
+}); */
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
   requestChecksumCalculation: "WHEN_REQUIRED",
@@ -67,6 +67,8 @@ export const generateDownloadUrl = async (req, res, next) => {
   const requestedFile = req.params.fileId;
   const file = await File.findById({ _id: requestedFile });
   if (!file) return res.status(404).json({ message: "file not found" });
+  if (file.status !== "UPLOADED")
+    return res.status(400).json({ message: "file not ready" });
   /* get user from session */
   if (!canReadFile(user, file)) {
     return res.status(403).json({ message: "permission not allowed" });
@@ -102,6 +104,9 @@ export const updateFileStatus = async (req, res, next) => {
   if (!fileFound) {
     return res.status(404).json({ message: "file not found" });
   }
+  await Job.findByIdAndUpdate(fileFound.jobId, {
+    $inc: { attachementCount: 1 },
+  });
   Object.assign(fileFound, updateFields);
   await fileFound.save();
   res.sendStatus(204);

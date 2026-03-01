@@ -45,7 +45,8 @@ router.route("/:jobId/submit").post(submitJob);
 router.route("/:jobId/intents").post(generateUploadUrls);
 router.route("/").get(getAllJobs);
 router.route("/:id").get(getJobDetail);
-router.route("/:id").patch(upload.single("attachedFile"), updateJob);
+router.route("/:id").patch(upload.none(), updateJob);
+// router.route("/:id").patch(upload.single("attachedFile"), updateJob);
 /* refactor into main and sub-path for sending user jobs and supervisor job */
 router.route("/:id").delete(deleteJob);
 export default router;

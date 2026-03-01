@@ -12,6 +12,7 @@ import { transitionJob } from "../utils/transitionJob.js";
 import { JobStates } from "../domain/jobState.js";
 import autoCatch from "../utils/autoCatch.js";
 import createQueryObject from "../utils/createQueryObject.js";
+import { assertObjectId } from "../utils/validateObjectId.js";
 const saveJobDraft = async (req, res, next) => {
   const { jobSheetNo, jobDate } = req.body;
   if (!jobSheetNo) {
@@ -57,6 +58,7 @@ const submitJob = async (req, res, next) => {
     }
     /* Transition the job state */
     await transitionJob(job, JobStates.READY);
+
     return res.status(200).json({ job });
   } catch (error) {
     next(error);
@@ -66,6 +68,7 @@ const updateJob = async (req, res, next) => {
   // const session = await mongoose.startSession();
   const { id: jobId } = req.params;
   const { jobSheetNo, jobName } = req.body;
+  console.log(jobSheetNo, jobName);
   const updateFields = req.body;
   if (!jobSheetNo || !jobName) {
     throw new BadRequestError("Please Provide all fields");
@@ -75,15 +78,15 @@ const updateJob = async (req, res, next) => {
     if (!job) {
       throw new NotFoundError("No Job Found");
     }
-    const oldFileName = job.attachedFileName;
+    /*   const oldFileName = job.attachedFileName;
     if (req.file) {
       const attachedFileName = req.file.filename;
       job.attachedFileName = attachedFileName;
-    }
+    } */
     Object.assign(job, updateFields);
     await job.save();
     // await session.commitTransaction();
-    if (oldFileName && req.file) {
+    /* if (oldFileName && req.file) {
       const attachedFilePathClient = "./client/src/assets/uploads";
       const filePath = path.join(attachedFilePathClient, oldFileName);
       fs.unlink(filePath, function (err) {
@@ -92,8 +95,8 @@ const updateJob = async (req, res, next) => {
         }
       });
     }
-    checkAuthorization(req.user, job.createdBy);
-    res.status(StatusCodes.OK).json({ job });
+    checkAuthorization(req.user, job.createdBy); */
+    res.status(200).json({ job });
   } catch (error) {
     // await session.abortTransaction();
     next(error);
@@ -151,16 +154,17 @@ const getAllJobs = async (req, res) => {
   const jobs = await result;
   res.status(StatusCodes.OK).json({ jobs, totalJobs, numOfPages });
 };
-const getJobDetail = async (req, res) => {
-  const { id: jobId } = req.params;
+const getJobDetail = async (req, res, next) => {
+  const { id } = req.params;
   try {
-    const job = await Job.findById({ _id: jobId });
+    assertObjectId(id, "jobId");
+    const job = await Job.findById({ _id: id });
     if (!job) {
       throw new NotFoundError("job not found");
     }
     res.status(200).json({ job });
   } catch (error) {
-    console.log(error);
+    next(error);
   }
 };
 const getStats = async (req, res) => {

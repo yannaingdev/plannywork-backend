@@ -64,6 +64,18 @@ const JobSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    /*  attachements: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "File",
+        },
+      ],
+    }, */
+    attachementCount: {
+      type: Number,
+      default: 0,
+    },
     attachedFileName: {
       type: String,
     },
@@ -78,7 +90,7 @@ const JobSchema = new mongoose.Schema(
       required: [true, "Please provide user"],
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Job", JobSchema);
