@@ -52,6 +52,12 @@ erDiagram
     date acceptedAt
     date completedAt
   }
+  APPSESSION {
+    ObjectId _id PK
+    string sessionId
+    date expires
+    string data
+  }
 
   USER ||--o{ JOB : creates
   JOB ||--o{ FILE : has
@@ -60,6 +66,7 @@ erDiagram
   JOB ||--o{ JOBASSIGNMENT : has
   USER ||--o{ JOBASSIGNMENT : assigns
   USER ||--o{ JOBASSIGNMENT : is_assignee
+  USER ||--o{ APPSESSION : has_session
 ```
 
 ## Software Architecture (Mermaid Flow)

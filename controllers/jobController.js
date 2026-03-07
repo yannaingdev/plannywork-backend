@@ -68,7 +68,6 @@ const updateJob = async (req, res, next) => {
   // const session = await mongoose.startSession();
   const { id: jobId } = req.params;
   const { jobSheetNo, jobName } = req.body;
-  console.log(jobSheetNo, jobName);
   const updateFields = req.body;
   if (!jobSheetNo || !jobName) {
     throw new BadRequestError("Please Provide all fields");
@@ -111,7 +110,7 @@ const getUserJobs = async (req, res) => {
   res.status(StatusCodes.OK).json({ jobs });
 };
 const getAllJobs = async (req, res) => {
-  const { status, jobType, sort, search, page } = req.query;
+  const { status, jobType, sort, search, page, state } = req.query;
   const userEmail = req.session?.user?.email;
   const user = await User.findOne({ email: userEmail }).lean().exec();
   if (!user) {
@@ -126,6 +125,10 @@ const getAllJobs = async (req, res) => {
   };
   if (status && status !== "all") {
     queryObject.status = status;
+  }
+  if (state) {
+    let jobState = state.toString().toUpperCase();
+    queryObject.jobState = jobState;
   }
   if (jobType && jobType !== "all") {
     queryObject.jobType = jobType;
@@ -235,6 +238,7 @@ const getStats = async (req, res) => {
 };
 const deleteJob = async (req, res) => {
   const { id: jobId } = req.params;
+  const sessionId = req.session?.user?.email;
   const job = await Job.findOne({ _id: jobId });
   if (!job) {
     throw new NotFoundError("No Job Found");
@@ -260,3 +264,30 @@ export {
   deleteJob,
   updateJob,
 };
+
+/* import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import File from "../model/File.js";
+
+const s3 = new S3Client({ region: process.env.AWS_REGION });
+
+const deleteJob = async (req, res, next) => {
+  const { id: jobId } = req.params;
+  try {
+    const job = await Job.findById(jobId);
+    if (!job) throw new NotFoundError("No Job Found");
+
+    checkAuthorization(req.user, job.createdBy);
+
+    const files = await File.find({ jobId }).lean();
+    for (const f of files) {
+      await s3.send(new DeleteObjectCommand({ Bucket: f.bucket, Key: f.s3Key }));
+    }
+    await File.deleteMany({ jobId });
+    await Job.deleteOne({ _id: jobId });
+
+    res.status(StatusCodes.OK).json({ msg: "Job Deleted", deletedFiles: files.length });
+  } catch (err) {
+    next(err);
+  }
+};
+ */

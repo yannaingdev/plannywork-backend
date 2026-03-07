@@ -72,7 +72,7 @@ const JobSchema = new mongoose.Schema(
         },
       ],
     }, */
-    attachementCount: {
+    attachmentCount: {
       type: Number,
       default: 0,
     },

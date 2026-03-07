@@ -105,7 +105,7 @@ export const updateFileStatus = async (req, res, next) => {
     return res.status(404).json({ message: "file not found" });
   }
   await Job.findByIdAndUpdate(fileFound.jobId, {
-    $inc: { attachementCount: 1 },
+    $inc: { attachmentCount: 1 },
   });
   Object.assign(fileFound, updateFields);
   await fileFound.save();
