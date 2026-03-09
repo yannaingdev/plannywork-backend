@@ -111,6 +111,7 @@ const getUserJobs = async (req, res) => {
 };
 const getAllJobs = async (req, res) => {
   const { status, jobType, sort, search, page, state } = req.query;
+  const { id: filteredUserId } = req.params;
   const userEmail = req.session?.user?.email;
   const user = await User.findOne({ email: userEmail }).lean().exec();
   if (!user) {
@@ -119,10 +120,17 @@ const getAllJobs = async (req, res) => {
   let queryLimit = 10;
   let querySkip = 0;
   const pageNum = Number(page) || 1;
+  let queryObject = {};
   // Todo: Add Role to queryObject
-  const queryObject = {
-    createdBy: user._id,
-  };
+  if (user.role === "supervisor" && filteredUserId) {
+    queryObject = {
+      createdBy: filteredUserId,
+    };
+  } else {
+    queryObject = {
+      createdBy: user._id,
+    };
+  }
   if (status && status !== "all") {
     queryObject.status = status;
   }

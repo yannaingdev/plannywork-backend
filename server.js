@@ -15,7 +15,7 @@ import authRoutes from "./routes/authRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import fileStorageRoute from "./routes/filestorage.route.js";
 import statsRoutes from "./routes/stats.route.js";
-import userJobRoute from "./routes/user.jobs.route.js";
+import userRoute from "./routes/user.route.js";
 import mountKeyAccountFeature from "./keyAccountFeature.js";
 import errorHandlerMiddleware from "./middleware/errorHandlerMiddleware.js";
 import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
@@ -53,11 +53,11 @@ app.use(
       // domain: "localhost", /* browser ignore cookie expiration if localhost used */
       sameSite: "Lax",
     },
-  })
+  }),
 );
 app.use(
   "/uploads",
-  express.static(path.resolve(__dirname, "/client/public/uploads"))
+  express.static(path.resolve(__dirname, "/client/public/uploads")),
 );
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
@@ -79,7 +79,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", verifySession, jobRoutes);
 app.use("/api/v1/files", verifySession, fileStorageRoute);
 app.use("/api/v1/stats", verifySession, statsRoutes);
-app.use("/api/v1/user", verifySession, userJobRoute);
+app.use("/api/v1/user", verifySession, userRoute);
 mountKeyAccountFeature(app);
 /* a generic errorHandler middleware to handle all error: response generalization */
 app.use(notFoundMiddleware);
