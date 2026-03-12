@@ -13,6 +13,12 @@ import { JobStates } from "../domain/jobState.js";
 import autoCatch from "../utils/autoCatch.js";
 import createQueryObject from "../utils/createQueryObject.js";
 import { assertObjectId } from "../utils/validateObjectId.js";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
+});
 const saveJobDraft = async (req, res, next) => {
   const { jobSheetNo, jobDate } = req.body;
   if (!jobSheetNo) {
@@ -173,7 +179,9 @@ const getJobDetail = async (req, res, next) => {
     if (!job) {
       throw new NotFoundError("job not found");
     }
-    res.status(200).json({ job });
+    // const jobId = job._id;
+    const file = await File.find({ jobId: job._id });
+    res.status(200).json({ job, file });
   } catch (error) {
     next(error);
   }
@@ -181,7 +189,7 @@ const getJobDetail = async (req, res, next) => {
 const getStats = async (req, res) => {
   const userEmail = req.session?.user?.email;
   const user = await User.findOne({ email: userEmail }).lean().exec();
-  console.log(userEmail, user);
+  // console.log(userEmail, user);
   // const userId = user._id.toString();
   if (!user) {
     return res.status(404).json({ message: "user not found" });
@@ -244,24 +252,60 @@ const getStats = async (req, res) => {
     .status(StatusCodes.OK)
     .json({ defaultStats, monthlyJobSheets, weeklyJobSheets, dailyJobSheets });
 };
-const deleteJob = async (req, res) => {
+const deleteJob = async (req, res, next) => {
   const { id: jobId } = req.params;
-  const sessionId = req.session?.user?.email;
-  const job = await Job.findOne({ _id: jobId });
-  if (!job) {
-    throw new NotFoundError("No Job Found");
-  }
-  checkAuthorization(req.user, job.createdBy);
-  const attachedFilePathClient = `./client/src/assets/uploads`;
-  const filePath = path.join(attachedFilePathClient, job.attachedFileName);
-  fs.unlink(filePath, (err) => {
-    if (err) {
-      console.log("issue with deleting file");
+  const userId = await getUserSession(req);
+  // const userIdNormalized = userId.toString();
+  try {
+    assertObjectId(jobId);
+    const job = await Job.findById(jobId);
+    if (!job) throw new NotFoundError("No Job Found");
+    const user = await User.findById(userId).lean().exec();
+    if (!user) throw new NotFoundError("No user found");
+    checkAuthorization(user, job.createdBy);
+
+    const files = await File.find({ jobId }).lean();
+    for (const f of files) {
+      await s3.send(
+        new DeleteObjectCommand({ Bucket: f.bucket, Key: f.s3Key }),
+      );
     }
-  });
-  await job.remove();
-  res.status(StatusCodes.OK).json({ msg: "Job Deleted" });
+    await File.deleteMany({ jobId });
+    await Job.deleteOne({ _id: jobId });
+    res
+      .status(200)
+      .json({ message: "job deleted", deletedFiles: files.length });
+  } catch (err) {
+    next(err);
+  }
 };
+const deleteDraft = async (req, res, next) => {
+  const { id: jobId } = req.params;
+  const userId = await getUserSession(req);
+  try {
+    assertObjectId(jobId);
+    const job = await Job.findById(jobId);
+    if (!job) {
+      throw new NotFoundError("Job Not Found");
+    }
+    const user = await User.findById(userId).lean();
+    if (!user) {
+      throw new NotFoundError("User Not Found");
+    }
+    checkAuthorization(userId, job.createdBy);
+    const isDraftJob = job.jobState === "DRAFT";
+    console.log(job.jobState);
+    if (!isDraftJob) {
+      return res.status(401).json({ message: "operation not allowed" });
+    }
+    await File.deleteMany({ jobId });
+    await Job.deleteOne({ _id: jobId });
+    res.sendStatus(204);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export {
   saveJobDraft,
   submitJob,
@@ -271,6 +315,7 @@ export {
   getStats,
   deleteJob,
   updateJob,
+  deleteDraft,
 };
 
 /* import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
@@ -299,3 +344,22 @@ const deleteJob = async (req, res, next) => {
   }
 };
  */
+
+/* const deleteJob = async (req, res) => {
+  const { id: jobId } = req.params;
+  const sessionId = req.session?.user?.email;
+  const job = await Job.findOne({ _id: jobId });
+  if (!job) {
+    throw new NotFoundError("No Job Found");
+  }
+  checkAuthorization(req.user, job.createdBy);
+  const attachedFilePathClient = `./client/src/assets/uploads`;
+  const filePath = path.join(attachedFilePathClient, job.attachedFileName);
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.log("issue with deleting file");
+    }
+  });
+  await job.remove();
+  res.status(StatusCodes.OK).json({ msg: "Job Deleted" });
+}; */

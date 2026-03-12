@@ -10,6 +10,7 @@ import {
   getAllJobs,
   updateJob,
   getJobDetail,
+  deleteDraft,
 } from "../controllers/jobController.js";
 import { generateUploadUrls } from "../controllers/fileController.js";
 import multer from "multer";
@@ -41,14 +42,15 @@ const fileFilter = (req, file, cb) => {
 };
 
 router.route("/draft").post(upload.none(), saveJobDraft);
+router.route("/draft/:id").delete(deleteDraft);
 router.route("/:jobId/submit").post(submitJob);
 router.route("/:jobId/intents").post(generateUploadUrls);
 router.route("/").get(getAllJobs);
 router.route("/:id").get(getJobDetail);
 router.route("/user/:id").get(getAllJobs);
 router.route("/:id").patch(upload.none(), updateJob);
+router.route("/:id").delete(deleteJob);
 
 // router.route("/:id").patch(upload.single("attachedFile"), updateJob);
 /* refactor into main and sub-path for sending user jobs and supervisor job */
-router.route("/:id").delete(deleteJob);
 export default router;

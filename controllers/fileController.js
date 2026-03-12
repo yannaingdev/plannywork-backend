@@ -11,6 +11,7 @@ import Job from "../model/Job.js";
 import File from "../model/File.js";
 import { canTransition } from "../utils/canTransition.js";
 import getUserSession from "../utils/getUserSession.js";
+import User from "../model/User.js";
 /* console.log({
   key: process.env.AWS_ACCESS_KEY_ID,
   secret: process.env.AWS_SECRET_ACCESS_KEY?.slice(0, 4),
@@ -65,7 +66,9 @@ export const generateUploadUrls = async (req, res, next) => {
 };
 export const generateDownloadUrl = async (req, res, next) => {
   const requestedFile = req.params.fileId;
+  const userId = await getUserSession(req);
   const file = await File.findById({ _id: requestedFile });
+  const user = await User.findById({ _id: userId });
   if (!file) return res.status(404).json({ message: "file not found" });
   if (file.status !== "UPLOADED")
     return res.status(400).json({ message: "file not ready" });
